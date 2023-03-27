@@ -1,0 +1,135 @@
+backend index.js
+
+const express=require("express")
+const http=require("http")
+const {Server}=require("socket.io")
+const app=express()
+
+const httpServer=http.createServer(app)
+httpServer.listen(9090,()=>{
+    console.log("server running at port 9090")
+})
+
+const io=new Server(httpServer)
+
+let names=[]; let chats=[]
+io.on("connection",(socket)=>{
+
+    socket.on("msg",(name,chat)=>{
+        names.push(name)
+        chats.push(`${name}:${chat}`)
+
+        socket.emit("server","Hellow from server")
+        socket.broadcast.emit("user",`a new client joined the chat: ${name}`)
+        socket.broadcast.emit("clients",`clients joined the chat: ${names}`)
+        socket.broadcast.emit("chat",`${name}:${chat}`)
+        socket.broadcast.emit("chatHistory",`${chats}`)
+    })
+})
+
+
+frontend
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+</head>
+<style>
+      #container{
+        display: flex;
+        justify-content: space-evenly;
+
+      }
+</style>
+  
+
+<body>
+    
+    
+   <div id="container">
+    <div>
+        <h1 id="showuser">Please enter your Name to enter CHATROOM</h1>
+        <input id="name" type="text" placeholder="Enter your name">
+        <h1 id="server"></h1>
+        <h2 id="user"></h2>
+        <h3 id="clients"></h3>
+        <h3 id="chatDisplay"></h3>
+        <input id="text" type="text" placeholder="Chat here">
+        <button onclick="handle()">Send=></button>
+        <button onclick="leave()">Leave the Chat</button>
+    </div>
+    <div>
+        <h1>Chat History</h1>
+        <h3 id="chatHistory"></h3>
+    </div>
+   </div>
+    
+</body>
+</html>
+
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js"
+integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+"
+ crossorigin="anonymous"></script>
+
+
+ <script>
+    const socket=io("http://localhost:9090/",{transports:["websocket"]}) 
+
+    let server=document.getElementById('server');
+    let user=document.getElementById('user')
+    let clients=document.getElementById('clients')
+    let chatDisplay=document.getElementById('chatDisplay')
+    let chatHistory=document.getElementById('chatHistory')
+    const handle=()=>{
+        let name=document.getElementById("name").value;
+        let chat=document.getElementById("text").value;
+       
+        socket.emit("msg",name,chat)
+    }
+    socket.on("server",(e)=>{
+        console.log(e)
+        server.textContent=e
+       
+    })
+
+    socket.on("user",(e)=>{
+        console.log(e)
+        user.textContent=e
+       
+    })
+    socket.on("clients",(e)=>{
+        console.log(e)
+        clients.textContent=e
+       
+    })
+
+    socket.on("chat",(e)=>{
+        console.log(e)
+        chatDisplay.textContent=e
+       
+    })
+
+    socket.on("chatHistory",(e)=>{
+        console.log(e)
+        chatHistory.textContent=e
+       
+    })
+
+
+
+    const leave=()=>{
+        let name=document.getElementById("name").value;
+        let chat=document.getElementById("text").value;
+       
+        socket.on("disconnect", (reason) => {
+  
+});
+    }
+
+  
+   
+</script>
